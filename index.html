@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>STFC - Simulador de Sinergias</title>
+    <title>STFC - Base de Datos de Naves y Sinergias</title>
     <style>
         body {
             background-color: #0b111e;
@@ -18,7 +18,7 @@
             border-radius: 10px;
             display: inline-block;
             box-shadow: 0 0 15px #00e5ff;
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
         }
         select {
@@ -32,6 +32,15 @@
             margin-bottom: 15px;
             cursor: pointer;
         }
+        optgroup {
+            background-color: #152238;
+            color: #ffb300;
+            font-style: normal;
+            font-weight: bold;
+        }
+        option {
+            color: #fff;
+        }
         .puente {
             display: flex;
             justify-content: space-around;
@@ -40,7 +49,6 @@
             padding: 15px;
             border-radius: 8px;
             border: 1px dashed #00e5ff;
-            position: relative;
         }
         .slot-oficial {
             width: 30%;
@@ -51,7 +59,6 @@
             border: 2px solid #ffb300;
             border-radius: 5px;
         }
-        /* Clase especial para iluminar cuando hay sinergia activa */
         .sinergia-activa {
             border-color: #ffeb3b !important;
             box-shadow: 0 0 10px #ffeb3b;
@@ -79,14 +86,54 @@
 <body>
 
     <div class="contenedor">
-        <h1>🖖 Comando de Sinergias - STFC</h1>
+        <h1>🖖 Configurador STFC - Flota Completa</h1>
         
-        <label for="selectorNaves"><strong>1. Nave Seleccionada:</strong></label><br>
-        <select id="selectorNaves">
-            <option value="enterprise">USS Enterprise (Exploradora Épica)</option>
+        <label for="selectorNaves"><strong>1. Seleccionar Nave de la Flota:</strong></label><br>
+        <select id="selectorNaves" onchange="calcularTripulacion()">
+            <option value="">-- Selecciona una Nave --</option>
+            
+            <optgroup label="Naves Iniciales / G1-G2">
+                <option value="realta">Realta (Exploradora)</option>
+                <option value="talla">Talla (Acorazada)</option>
+                <option value="phandra">Phandra (Interceptora)</option>
+                <option value="turas">Turas (Exploradora)</option>
+                <option value="jellyfish_g2">Jellyfish (Especial G2)</option>
+            </optgroup>
+
+            <optgroup label="Naves G3 (Faccción / Comunes)">
+                <option value="mayflower">Mayflower (Federación G3)</option>
+                <option value="saladin">USS Saladin (Federación G3)</option>
+                <option value="enterprise">USS Enterprise (Federación G3 Épica)</option>
+                <option value="d3">Clase D3 (Klingon G3)</option>
+                <option value="bortas">Bortas (Klingon G3)</option>
+                <option value="brel">Clase B'Rel (Klingon G3)</option>
+                <option value="centurion">Centurion (Romulana G3)</option>
+                <option value="gladius">Gladius (Romulana G3)</option>
+                <option value="valkis">Valkis (Romulana G3)</option>
+            </optgroup>
+
+            <optgroup label="Naves Especiales / De Eventos">
+                <option value="botany_bay">Botany Bay (Extracción de Datos)</option>
+                <option value="franklin">USS Franklin (Caza de Enjambres Swarm)</option>
+                <option value="vidar">Vi'Dar (Caza de Sondat Borg)</option>
+                <option value="stella">Stella (Investigación Forajida)</option>
+                <option value="discovery">USS Discovery (Salto de Alcubierre)</option>
+                <option value="cerritos">USS Cerritos (Apoyo a Flota)</option>
+                <option value="voyager">USS Voyager (Exploración de Cuadrante Delta)</option>
+                <option value="defiant">USS Defiant (Caza de Jem'Hadar)</option>
+                <option value="talios">Vi'Dar Talios (Borg Avanzado)</option>
+            </optgroup>
+
+            <optgroup label="Naves de Minería e Industria">
+                <option value="envoy">Envoy (Minera G2)</option>
+                <option value="horizon">ECS Horizon (Minera G3)</option>
+                <option value="antares">USS Antares (Minera de Facción)</option>
+                <option value="meridian">Meridian (Minería Isótopos)</option>
+                <option value="dvor">Ferengi D'Vor (Minería de Latio)</option>
+            </optgroup>
         </select>
 
-        <p><strong>2. Configurar Puente (Busca combinar facciones idénticas):</strong></p>
+        <p><strong>2. Configurar Puente:</strong></p>
         <div class="puente">
             <div id="boxIzq" class="slot-oficial">
                 <label>Flanco Izq.</label>
@@ -120,75 +167,97 @@
         </div>
 
         <div class="info-box">
-            <h3>Estado del Puente:</h3>
-            <p><strong>Sinergia Total Detectada:</strong> <span id="valSinergia" class="bonus-badge">+0%</span></p>
-            <p><strong>Habilidad de Capitán Potenciada:</strong> <br><span id="habCapitan" class="habilidad">Ninguna</span></p>
+            <h3>Estado del Sistema:</h3>
+            <p><strong>Nave Seleccionada:</strong> <span id="infoNaveActual" style="color: #fff; font-weight: bold;">Ninguna</span></p>
+            <p><strong>Sinergia de Tripulación:</strong> <span id="valSinergia" class="bonus-badge">+0%</span></p>
+            <p><strong>Habilidad del Capitán:</strong> <br><span id="habCapitan" class="habilidad">Ninguna</span></p>
         </div>
     </div>
 
     <script>
-        // Añadimos la propiedad "grupo" a nuestros oficiales
+        // "Base de datos" ampliada de Naves
+        const baseDatosNaves = {
+            realta: "Realta (Exploradora Inicial)",
+            talla: "Talla (Acorazada Temprana)",
+            phandra: "Phandra (Interceptora G2)",
+            turas: "Turas (Exploradora G2)",
+            jellyfish_g2: "Jellyfish (Poderosa nave premium de G2)",
+            mayflower: "Mayflower (Exploradora de la Federación)",
+            saladin: "USS Saladin (Interceptora clave de la Federación)",
+            enterprise: "USS Enterprise (Acorazado Épico G3 de Federación)",
+            d3: "Clase D3 (Interceptora Klingon)",
+            bortas: "Bortas (Acorazada Klingon)",
+            brel: "Clase B'Rel (Exploradora Klingon)",
+            centurion: "Centurion (Acorazada Romulana)",
+            gladius: "Gladius (Interceptora Romulana)",
+            valkis: "Valkis (Exploradora Romulana)",
+            botany_bay: "Botany Bay (Especialista en Datos Corruptos)",
+            franklin: "USS Franklin (Diseñada exclusivamente para matar Enjambres Swarm)",
+            vidar: "Vi'Dar (Veloz cazadora de Sondas Borg)",
+            stella: "Stella (Crucial para el bucle de eventos Forajidos/Outlaw)",
+            discovery: "USS Discovery (Nave de apoyo capaz de teletransportarse)",
+            cerritos: "USS Cerritos (Buffea los componentes de otras naves de tu flota)",
+            voyager: "USS Voyager (Especialista en el espacio del Cuadrante Delta)",
+            defiant: "USS Defiant (Especializada en bucle de refinería de Dominion)",
+            talios: "Vi'Dar Talios (Expansión avanzada del bucle Borg)",
+            envoy: "Envoy (Minera básica para todo jugador)",
+            horizon: "ECS Horizon (Minera de carga pesada G3)",
+            antares: "USS Antares (Minera especializada en Gas de la Federación)",
+            meridian: "Meridian (Especializada en extracción de Isótopos)",
+            dvor: "Ferengi D'Vor (Nave para amasar grandes cantidades de Latio)"
+        };
+
         const baseDatosOficiales = {
-            kirk: {
-                nombre: "Kirk",
-                grupo: "Enterprise",
-                habilidadCapitan: "Aumenta las estadísticas de la nave un 20%"
-            },
-            spock: {
-                nombre: "Spock",
-                grupo: "Enterprise",
-                habilidadCapitan: "Aumenta la perforación de escudos un 15%"
-            },
-            nero: {
-                nombre: "Nero",
-                grupo: "Romulano",
-                habilidadCapitan: "Aumenta el daño de fuego un 25%"
-            }
+            kirk: { nombre: "Kirk", grupo: "Enterprise", habilidadCapitan: "Aumenta las estadísticas de la nave un 20%" },
+            spock: { nombre: "Spock", grupo: "Enterprise", habilidadCapitan: "Aumenta la perforación de escudos un 15%" },
+            nero: { nombre: "Nero", grupo: "Romulano", habilidadCapitan: "Aumenta el daño de fuego un 25%" }
         };
 
         function calcularTripulacion() {
+            // Actualizar la información de la nave seleccionada
+            const idNave = document.getElementById("selectorNaves").value;
+            const textoNave = document.getElementById("infoNaveActual");
+            
+            if(idNave && baseDatosNaves[idNave]) {
+                textoNave.innerText = baseDatosNaves[idNave];
+            } else {
+                textoNave.innerText = "Ninguna";
+            }
+
+            // Lógica de Sinergias (Igual al paso anterior)
             const idCap = document.getElementById("oficialCap").value;
             const idIzq = document.getElementById("oficialIzq").value;
             const idDer = document.getElementById("oficialDer").value;
 
-            // Elementos visuales de los bordes amarillos
             const boxIzq = document.getElementById("boxIzq");
             const boxDer = document.getElementById("boxDer");
 
-            // Quitamos estilos de sinergia previos
             boxIzq.classList.remove("sinergia-activa");
             boxDer.classList.remove("sinergia-activa");
 
             let sinergiaTotal = 0;
 
-            // Si hay un capitán, miramos si los oficiales laterales comparten grupo con él
             if (idCap && baseDatosOficiales[idCap]) {
                 const grupoCapitan = baseDatosOficiales[idCap].grupo;
 
-                // Comprobar flanco izquierdo
                 if (idIzq && baseDatosOficiales[idIzq] && baseDatosOficiales[idIzq].grupo === grupoCapitan) {
-                    sinergiaTotal += 10; // Añade 10% de sinergia
-                    boxIzq.classList.add("sinergia-activa"); // Ilumina el slot izquierdo
+                    sinergiaTotal += 10;
+                    boxIzq.classList.add("sinergia-activa");
                 }
-
-                // Comprobar flanco derecho
                 if (idDer && baseDatosOficiales[idDer] && baseDatosOficiales[idDer].grupo === grupoCapitan) {
-                    sinergiaTotal += 10; // Añade otro 10% de sinergia
-                    boxDer.classList.add("sinergia-activa"); // Ilumina el slot derecho
+                    sinergiaTotal += 10;
+                    boxDer.classList.add("sinergia-activa");
                 }
 
-                // Mostrar habilidad del capitán con su bono
                 const datosCap = baseDatosOficiales[idCap];
                 document.getElementById("habCapitan").innerHTML = 
-                    `<strong>${datosCap.nombre}:</strong> ${datosCap.habilidadCapitan} <span style="color:#ffeb3b;">(Bonus actual de Sinergia: +${sinergiaTotal}%)</span>`;
+                    `<strong>${datosCap.nombre}:</strong> ${datosCap.habilidadCapitan} <span style="color:#ffeb3b;">(+${sinergiaTotal}% de bonus)</span>`;
             } else {
                 document.getElementById("habCapitan").innerText = "Ninguna (Se necesita un Capitán asignado)";
             }
 
-            // Actualizar el número del escudo amarillo arriba
             document.getElementById("valSinergia").innerText = `+${sinergiaTotal}%`;
         }
     </script>
-
 </body>
 </html>
