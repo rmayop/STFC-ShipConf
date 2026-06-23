@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>STFC - Mi Hangar Personal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background-color: #0b111e;
+            color: #4fc3f7;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .contenedor {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #152238;
+            border: 2px solid #00e5ff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00e5ff;
+        }
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #00e5ff;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header-panel h2 { margin: 0; color: #fff; }
+        .btn-logout {
+            background-color: #f44336;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .btn-logout:hover { background-color: #d32f2f; }
+        
+        select {
+            background-color: #0b111e;
+            color: #fff;
+            border: 1px solid #00e5ff;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100%;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        optgroup { color: #ffb300; font-weight: bold; }
+        option { color: #fff; }
+
+        .grid-diques {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .tarjeta-dique {
+            background-color: #0b111e;
+            border: 1px solid #00e5ff;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+        .letra-dique {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffb300;
+        }
+        .info-nave {
+            font-size: 13px;
+            color: #b0bec5;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <div class="header-panel">
+            <h2>🖖 Panel de Control: Mis Diques</h2>
+            <div>
+                <span id="userEmail" style="color: #ffb300; margin-right: 15px; font-weight: bold;">Cargando comandante...</span>
+                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+        
+        <div class="grid-diques">
+            <script>
+                // Generamos de manera automática los 4 diques principales en pantalla
+                const letras = ['A', 'B', 'C', 'D'];
+                letras.forEach(l => {
+                    document.write(`
+                        <div class="tarjeta-dique">
+                            <div class="letra-dique">${l}</div>
+                            <h3 style="color:#fff; margin-top:0; width: 70%;">Dique de Nave</h3>
+                            <label>Asignar Nave:</label>
+                            <select id="select_${l}" onchange="guardarEnNube('${l}')">
+                                <option value="">-- Dique Vacío --</option>
+                                <optgroup label="Naves Iniciales / G1-G2">
+                                    <option value="realta">Realta</option>
+                                    <option value="talla">Talla</option>
+                                    <option value="phandra">Phandra</option>
+                                </optgroup>
+                                <optgroup label="Naves G3 de Faccción">
+                                    <option value="saladin">USS Saladin</option>
+                                    <option value="enterprise">USS Enterprise (Épica)</option>
+                                    <option value="bortas">Bortas</option>
+                                </optgroup>
+                                <optgroup label="Naves Especiales">
+                                    <option value="vidar">Vi'Dar</option>
+                                    <option value="franklin">USS Franklin</option>
+                                    <option value="stella">Stella</option>
+                                    <option value="voyager">USS Voyager</option>
+                                </optgroup>
+                            </select>
+                            <div id="info_${l}" class="info-nave">Conectando...</div>
+                        </div>
+                    `);
+                });
+            </script>
+        </div>
+    </div>
+
+    <script>
+        // === CONFIGURACIÓN DE TU BASE DE DATOS ===
+        const SUPABASE_URL = "https://wwqbdjslgdizegztdcjc.supabase.co"; 
+        const SUPABASE_KEY = "sb_publishable_Q4MUzur_4BmyFosBuhiYcQ_PFKVu_xT"; 
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let usuarioActual = null;
+
+        // 1. SEGURIDAD: Verifica si el usuario realmente está logueado
+        async function protegerRuta() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                usuarioActual = session.user;
+                document.getElementById('userEmail').innerText = usuarioActual.email;
+                // Si todo está bien, cargamos sus naves de la BBDD
+                cargarDatosDesdeNube();
+            } else {
+                // SINO TIENE SESIÓN: Patada e intento de colarse frustrado, volvemos al login
+                window.location.href = "index.html";
+            }
+        }
+
+        // 2. LEER DIQUES: Descarga solo las naves que pertenezcan a este usuario
+        async function cargarDatosDesdeNube() {
+            try {
+                let { data, error } = await supabase
+                    .from('diques')
+                    .select('*')
+                    .eq('usuario_id', usuarioActual.id);
+
+                if (error) throw error;
+
+                // Ponemos las naves en cada dique correspondiente
+                if (data) {
+                    data.forEach(dique => {
+                        const selector = document.getElementById(`select_${dique.letra_dique}`);
+                        const info = document.getElementById(`info_${dique.letra_dique}`);
+                        if (selector) {
+                            selector.value = dique.id_nave;
+                            info.innerHTML = dique.id_nave ? "<span style='color:#4caf50;'>✔ En la nube</span>" : "Dique libre";
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+            }
+        }
+
+        // 3. GUARDAR: Guarda de forma segura la nave elegida vinculándola a su ID de usuario
+        async function guardarEnNube(letra) {
+            const naveSeleccionada = document.getElementById(`select_${letra}`).value;
+            const infoDiv = document.getElementById(`info_${letra}`);
+            infoDiv.innerText = "Guardando...";
+
+            try {
+                const { error } = await supabase
+                    .from('diques')
+                    .upsert({ 
+                        usuario_id: usuarioActual.id, 
+                        letra_dique: letra, 
+                        id_nave: naveSeleccionada 
+                    }, { onConflict: 'usuario_id, letra_dique' });
+
+                if (error) throw error;
+                infoDiv.innerHTML = naveSeleccionada ? "<span style='color:#4caf50;'>✔ Guardado seguro</span>" : "Dique libre";
+            } catch (error) {
+                infoDiv.innerHTML = "<span style='color:#f44336;'>❌ Error de permisos (RLS)</span>";
+                console.error(error);
+            }
+        }
+
+        // 4. CERRAR SESIÓN
+        async function cerrarSesion() {
+            await supabase.auth.signOut();
+            window.location.href = "index.html";
+        }
+
+        // Arrancar la comprobación de seguridad nada más abrir la página
+        protegerRuta();
+    </script>
+</body>
+</html>
