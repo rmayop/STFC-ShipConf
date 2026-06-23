@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>STFC - Simulador de Sinergias</title>
+    <style>
+        body {
+            background-color: #0b111e;
+            color: #4fc3f7;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .contenedor {
+            border: 2px solid #00e5ff;
+            background-color: #152238;
+            padding: 25px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 0 15px #00e5ff;
+            max-width: 600px;
+            width: 100%;
+        }
+        select {
+            background-color: #0b111e;
+            color: #fff;
+            border: 1px solid #00e5ff;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            width: 90%;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .puente {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            background-color: #0b111e;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed #00e5ff;
+            position: relative;
+        }
+        .slot-oficial {
+            width: 30%;
+            padding: 5px;
+            border: 1px solid transparent;
+        }
+        .slot-oficial.capitan {
+            border: 2px solid #ffb300;
+            border-radius: 5px;
+        }
+        /* Clase especial para iluminar cuando hay sinergia activa */
+        .sinergia-activa {
+            border-color: #ffeb3b !important;
+            box-shadow: 0 0 10px #ffeb3b;
+            background-color: rgba(255, 235, 59, 0.05);
+        }
+        .info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #0b111e;
+            border-left: 5px solid #00e5ff;
+            text-align: left;
+        }
+        .bonus-badge {
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 3px 8px;
+            font-weight: bold;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        h3 { color: #fff; margin: 5px 0; }
+        .habilidad { font-size: 13px; color: #b0bec5; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <h1>🖖 Comando de Sinergias - STFC</h1>
+        
+        <label for="selectorNaves"><strong>1. Nave Seleccionada:</strong></label><br>
+        <select id="selectorNaves">
+            <option value="enterprise">USS Enterprise (Exploradora Épica)</option>
+        </select>
+
+        <p><strong>2. Configurar Puente (Busca combinar facciones idénticas):</strong></p>
+        <div class="puente">
+            <div id="boxIzq" class="slot-oficial">
+                <label>Flanco Izq.</label>
+                <select id="oficialIzq" onchange="calcularTripulacion()">
+                    <option value="">- Vacío -</option>
+                    <option value="kirk">Kirk (Enterprise)</option>
+                    <option value="spock">Spock (Enterprise)</option>
+                    <option value="nero">Nero (Romulano)</option>
+                </select>
+            </div>
+
+            <div id="boxCap" class="slot-oficial capitan">
+                <label style="color: #ffb300;">⭐ CAPITÁN</label>
+                <select id="oficialCap" onchange="calcularTripulacion()">
+                    <option value="">- Vacío -</option>
+                    <option value="kirk">Kirk (Enterprise)</option>
+                    <option value="spock">Spock (Enterprise)</option>
+                    <option value="nero">Nero (Romulano)</option>
+                </select>
+            </div>
+
+            <div id="boxDer" class="slot-oficial">
+                <label>Flanco Der.</label>
+                <select id="oficialDer" onchange="calcularTripulacion()">
+                    <option value="">- Vacío -</option>
+                    <option value="kirk">Kirk (Enterprise)</option>
+                    <option value="spock">Spock (Enterprise)</option>
+                    <option value="nero">Nero (Romulano)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>Estado del Puente:</h3>
+            <p><strong>Sinergia Total Detectada:</strong> <span id="valSinergia" class="bonus-badge">+0%</span></p>
+            <p><strong>Habilidad de Capitán Potenciada:</strong> <br><span id="habCapitan" class="habilidad">Ninguna</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Añadimos la propiedad "grupo" a nuestros oficiales
+        const baseDatosOficiales = {
+            kirk: {
+                nombre: "Kirk",
+                grupo: "Enterprise",
+                habilidadCapitan: "Aumenta las estadísticas de la nave un 20%"
+            },
+            spock: {
+                nombre: "Spock",
+                grupo: "Enterprise",
+                habilidadCapitan: "Aumenta la perforación de escudos un 15%"
+            },
+            nero: {
+                nombre: "Nero",
+                grupo: "Romulano",
+                habilidadCapitan: "Aumenta el daño de fuego un 25%"
+            }
+        };
+
+        function calcularTripulacion() {
+            const idCap = document.getElementById("oficialCap").value;
+            const idIzq = document.getElementById("oficialIzq").value;
+            const idDer = document.getElementById("oficialDer").value;
+
+            // Elementos visuales de los bordes amarillos
+            const boxIzq = document.getElementById("boxIzq");
+            const boxDer = document.getElementById("boxDer");
+
+            // Quitamos estilos de sinergia previos
+            boxIzq.classList.remove("sinergia-activa");
+            boxDer.classList.remove("sinergia-activa");
+
+            let sinergiaTotal = 0;
+
+            // Si hay un capitán, miramos si los oficiales laterales comparten grupo con él
+            if (idCap && baseDatosOficiales[idCap]) {
+                const grupoCapitan = baseDatosOficiales[idCap].grupo;
+
+                // Comprobar flanco izquierdo
+                if (idIzq && baseDatosOficiales[idIzq] && baseDatosOficiales[idIzq].grupo === grupoCapitan) {
+                    sinergiaTotal += 10; // Añade 10% de sinergia
+                    boxIzq.classList.add("sinergia-activa"); // Ilumina el slot izquierdo
+                }
+
+                // Comprobar flanco derecho
+                if (idDer && baseDatosOficiales[idDer] && baseDatosOficiales[idDer].grupo === grupoCapitan) {
+                    sinergiaTotal += 10; // Añade otro 10% de sinergia
+                    boxDer.classList.add("sinergia-activa"); // Ilumina el slot derecho
+                }
+
+                // Mostrar habilidad del capitán con su bono
+                const datosCap = baseDatosOficiales[idCap];
+                document.getElementById("habCapitan").innerHTML = 
+                    `<strong>${datosCap.nombre}:</strong> ${datosCap.habilidadCapitan} <span style="color:#ffeb3b;">(Bonus actual de Sinergia: +${sinergiaTotal}%)</span>`;
+            } else {
+                document.getElementById("habCapitan").innerText = "Ninguna (Se necesita un Capitán asignado)";
+            }
+
+            // Actualizar el número del escudo amarillo arriba
+            document.getElementById("valSinergia").innerText = `+${sinergiaTotal}%`;
+        }
+    </script>
+
+</body>
+</html>
