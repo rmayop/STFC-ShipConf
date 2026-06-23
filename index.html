@@ -2,262 +2,221 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>STFC - Base de Datos de Naves y Sinergias</title>
+    <title>STFC - Diques en la Nube con Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             background-color: #0b111e;
             color: #4fc3f7;
             font-family: Arial, sans-serif;
-            text-align: center;
             padding: 20px;
+            margin: 0;
         }
         .contenedor {
-            border: 2px solid #00e5ff;
+            max-width: 900px;
+            margin: 0 auto;
             background-color: #152238;
+            border: 2px solid #00e5ff;
             padding: 25px;
             border-radius: 10px;
-            display: inline-block;
             box-shadow: 0 0 15px #00e5ff;
-            max-width: 650px;
-            width: 100%;
+        }
+        .estado-conexion {
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #0b111e;
+            border-left: 5px solid #ffb300;
         }
         select {
             background-color: #0b111e;
             color: #fff;
             border: 1px solid #00e5ff;
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 5px;
-            width: 90%;
-            margin-bottom: 15px;
+            padding: 6px;
+            border-radius: 4px;
             cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
         }
-        optgroup {
-            background-color: #152238;
-            color: #ffb300;
-            font-style: normal;
-            font-weight: bold;
-        }
-        option {
-            color: #fff;
-        }
-        .puente {
-            display: flex;
-            justify-content: space-around;
+        .grid-diques {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-top: 20px;
+        }
+        .tarjeta-dique {
             background-color: #0b111e;
-            padding: 15px;
+            border: 1px solid #00e5ff;
             border-radius: 8px;
-            border: 1px dashed #00e5ff;
-        }
-        .slot-oficial {
-            width: 30%;
-            padding: 5px;
-            border: 1px solid transparent;
-        }
-        .slot-oficial.capitan {
-            border: 2px solid #ffb300;
-            border-radius: 5px;
-        }
-        .sinergia-activa {
-            border-color: #ffeb3b !important;
-            box-shadow: 0 0 10px #ffeb3b;
-            background-color: rgba(255, 235, 59, 0.05);
-        }
-        .info-box {
-            margin-top: 20px;
             padding: 15px;
-            background-color: #0b111e;
-            border-left: 5px solid #00e5ff;
             text-align: left;
+            position: relative;
         }
-        .bonus-badge {
-            background-color: #ffeb3b;
-            color: #000;
-            padding: 3px 8px;
+        .letra-dique {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
             font-weight: bold;
-            border-radius: 3px;
-            font-size: 12px;
+            color: #ffb300;
         }
-        h3 { color: #fff; margin: 5px 0; }
-        .habilidad { font-size: 13px; color: #b0bec5; }
+        .tarjeta-dique h3 {
+            margin-top: 0;
+            color: #fff;
+            border-bottom: 1px solid #152238;
+            padding-bottom: 5px;
+            width: 80%;
+        }
+        .info-nave {
+            font-size: 13px;
+            color: #b0bec5;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
 
     <div class="contenedor">
-        <h1>🖖 Configurador STFC - Flota Completa</h1>
+        <h1>🖖 Hangar de la Flota (Conectado a Supabase)</h1>
         
-        <label for="selectorNaves"><strong>1. Seleccionar Nave de la Flota:</strong></label><br>
-        <select id="selectorNaves" onchange="calcularTripulacion()">
-            <option value="">-- Selecciona una Nave --</option>
-            
-            <optgroup label="Naves Iniciales / G1-G2">
-                <option value="realta">Realta (Exploradora)</option>
-                <option value="talla">Talla (Acorazada)</option>
-                <option value="phandra">Phandra (Interceptora)</option>
-                <option value="turas">Turas (Exploradora)</option>
-                <option value="jellyfish_g2">Jellyfish (Especial G2)</option>
-            </optgroup>
+        <div id="status" class="estado-conexion">📡 Sincronizando con los sensores de la Flota Estelar...</div>
 
-            <optgroup label="Naves G3 (Faccción / Comunes)">
-                <option value="mayflower">Mayflower (Federación G3)</option>
-                <option value="saladin">USS Saladin (Federación G3)</option>
-                <option value="enterprise">USS Enterprise (Federación G3 Épica)</option>
-                <option value="d3">Clase D3 (Klingon G3)</option>
-                <option value="bortas">Bortas (Klingon G3)</option>
-                <option value="brel">Clase B'Rel (Klingon G3)</option>
-                <option value="centurion">Centurion (Romulana G3)</option>
-                <option value="gladius">Gladius (Romulana G3)</option>
-                <option value="valkis">Valkis (Romulana G3)</option>
-            </optgroup>
-
-            <optgroup label="Naves Especiales / De Eventos">
-                <option value="botany_bay">Botany Bay (Extracción de Datos)</option>
-                <option value="franklin">USS Franklin (Caza de Enjambres Swarm)</option>
-                <option value="vidar">Vi'Dar (Caza de Sondat Borg)</option>
-                <option value="stella">Stella (Investigación Forajida)</option>
-                <option value="discovery">USS Discovery (Salto de Alcubierre)</option>
-                <option value="cerritos">USS Cerritos (Apoyo a Flota)</option>
-                <option value="voyager">USS Voyager (Exploración de Cuadrante Delta)</option>
-                <option value="defiant">USS Defiant (Caza de Jem'Hadar)</option>
-                <option value="talios">Vi'Dar Talios (Borg Avanzado)</option>
-            </optgroup>
-
-            <optgroup label="Naves de Minería e Industria">
-                <option value="envoy">Envoy (Minera G2)</option>
-                <option value="horizon">ECS Horizon (Minera G3)</option>
-                <option value="antares">USS Antares (Minera de Facción)</option>
-                <option value="meridian">Meridian (Minería Isótopos)</option>
-                <option value="dvor">Ferengi D'Vor (Minería de Latio)</option>
-            </optgroup>
-        </select>
-
-        <p><strong>2. Configurar Puente:</strong></p>
-        <div class="puente">
-            <div id="boxIzq" class="slot-oficial">
-                <label>Flanco Izq.</label>
-                <select id="oficialIzq" onchange="calcularTripulacion()">
-                    <option value="">- Vacío -</option>
-                    <option value="kirk">Kirk (Enterprise)</option>
-                    <option value="spock">Spock (Enterprise)</option>
-                    <option value="nero">Nero (Romulano)</option>
+        <div class="grid-diques">
+            <div class="tarjeta-dique">
+                <div class="letra-dique">A</div>
+                <h3>Dique de Nave</h3>
+                <label>Asignar Nave:</label>
+                <select id="select_A" onchange="guardarEnNube('A')">
+                    <option value="">-- Vacío --</option>
+                    <option value="enterprise">USS Enterprise</option>
+                    <option value="saladin">USS Saladin</option>
+                    <option value="vidar">Vi'Dar</option>
+                    <option value="franklin">USS Franklin</option>
                 </select>
+                <div id="info_A" class="info-nave">Cargando...</div>
             </div>
 
-            <div id="boxCap" class="slot-oficial capitan">
-                <label style="color: #ffb300;">⭐ CAPITÁN</label>
-                <select id="oficialCap" onchange="calcularTripulacion()">
-                    <option value="">- Vacío -</option>
-                    <option value="kirk">Kirk (Enterprise)</option>
-                    <option value="spock">Spock (Enterprise)</option>
-                    <option value="nero">Nero (Romulano)</option>
+            <div class="tarjeta-dique">
+                <div class="letra-dique">B</div>
+                <h3>Dique de Nave</h3>
+                <label>Asignar Nave:</label>
+                <select id="select_B" onchange="guardarEnNube('B')">
+                    <option value="">-- Vacío --</option>
+                    <option value="enterprise">USS Enterprise</option>
+                    <option value="saladin">USS Saladin</option>
+                    <option value="vidar">Vi'Dar</option>
+                    <option value="franklin">USS Franklin</option>
                 </select>
+                <div id="info_B" class="info-nave">Cargando...</div>
             </div>
 
-            <div id="boxDer" class="slot-oficial">
-                <label>Flanco Der.</label>
-                <select id="oficialDer" onchange="calcularTripulacion()">
-                    <option value="">- Vacío -</option>
-                    <option value="kirk">Kirk (Enterprise)</option>
-                    <option value="spock">Spock (Enterprise)</option>
-                    <option value="nero">Nero (Romulano)</option>
+            <div class="tarjeta-dique">
+                <div class="letra-dique">C</div>
+                <h3>Dique de Nave</h3>
+                <label>Asignar Nave:</label>
+                <select id="select_C" onchange="guardarEnNube('C')">
+                    <option value="">-- Vacío --</option>
+                    <option value="enterprise">USS Enterprise</option>
+                    <option value="saladin">USS Saladin</option>
+                    <option value="vidar">Vi'Dar</option>
+                    <option value="franklin">USS Franklin</option>
                 </select>
+                <div id="info_C" class="info-nave">Cargando...</div>
             </div>
-        </div>
 
-        <div class="info-box">
-            <h3>Estado del Sistema:</h3>
-            <p><strong>Nave Seleccionada:</strong> <span id="infoNaveActual" style="color: #fff; font-weight: bold;">Ninguna</span></p>
-            <p><strong>Sinergia de Tripulación:</strong> <span id="valSinergia" class="bonus-badge">+0%</span></p>
-            <p><strong>Habilidad del Capitán:</strong> <br><span id="habCapitan" class="habilidad">Ninguna</span></p>
+            <div class="tarjeta-dique">
+                <div class="letra-dique">D</div>
+                <h3>Dique de Nave</h3>
+                <label>Asignar Nave:</label>
+                <select id="select_D" onchange="guardarEnNube('D')">
+                    <option value="">-- Vacío --</option>
+                    <option value="enterprise">USS Enterprise</option>
+                    <option value="saladin">USS Saladin</option>
+                    <option value="vidar">Vi'Dar</option>
+                    <option value="franklin">USS Franklin</option>
+                </select>
+                <div id="info_D" class="info-nave">Cargando...</div>
+            </div>
         </div>
     </div>
 
     <script>
-        // "Base de datos" ampliada de Naves
-        const baseDatosNaves = {
-            realta: "Realta (Exploradora Inicial)",
-            talla: "Talla (Acorazada Temprana)",
-            phandra: "Phandra (Interceptora G2)",
-            turas: "Turas (Exploradora G2)",
-            jellyfish_g2: "Jellyfish (Poderosa nave premium de G2)",
-            mayflower: "Mayflower (Exploradora de la Federación)",
-            saladin: "USS Saladin (Interceptora clave de la Federación)",
-            enterprise: "USS Enterprise (Acorazado Épico G3 de Federación)",
-            d3: "Clase D3 (Interceptora Klingon)",
-            bortas: "Bortas (Acorazada Klingon)",
-            brel: "Clase B'Rel (Exploradora Klingon)",
-            centurion: "Centurion (Acorazada Romulana)",
-            gladius: "Gladius (Interceptora Romulana)",
-            valkis: "Valkis (Exploradora Romulana)",
-            botany_bay: "Botany Bay (Especialista en Datos Corruptos)",
-            franklin: "USS Franklin (Diseñada exclusivamente para matar Enjambres Swarm)",
-            vidar: "Vi'Dar (Veloz cazadora de Sondas Borg)",
-            stella: "Stella (Crucial para el bucle de eventos Forajidos/Outlaw)",
-            discovery: "USS Discovery (Nave de apoyo capaz de teletransportarse)",
-            cerritos: "USS Cerritos (Buffea los componentes de otras naves de tu flota)",
-            voyager: "USS Voyager (Especialista en el espacio del Cuadrante Delta)",
-            defiant: "USS Defiant (Especializada en bucle de refinería de Dominion)",
-            talios: "Vi'Dar Talios (Expansión avanzada del bucle Borg)",
-            envoy: "Envoy (Minera básica para todo jugador)",
-            horizon: "ECS Horizon (Minera de carga pesada G3)",
-            antares: "USS Antares (Minera especializada en Gas de la Federación)",
-            meridian: "Meridian (Especializada en extracción de Isótopos)",
-            dvor: "Ferengi D'Vor (Nave para amasar grandes cantidades de Latio)"
-        };
+        // === CONFIGURACIÓN DE TU BASE DE DATOS ===
+        const SUPABASE_URL = https://wwqbdjslgdizegztdcjc.supabase.co; 
+        const SUPABASE_KEY = sb_publishable_Q4MUzur_4BmyFosBuhiYcQ_PFKVu_xT; 
 
-        const baseDatosOficiales = {
-            kirk: { nombre: "Kirk", grupo: "Enterprise", habilidadCapitan: "Aumenta las estadísticas de la nave un 20%" },
-            spock: { nombre: "Spock", grupo: "Enterprise", habilidadCapitan: "Aumenta la perforación de escudos un 15%" },
-            nero: { nombre: "Nero", grupo: "Romulano", habilidadCapitan: "Aumenta el daño de fuego un 25%" }
-        };
+        // Inicializamos el cliente de Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        function calcularTripulacion() {
-            // Actualizar la información de la nave seleccionada
-            const idNave = document.getElementById("selectorNaves").value;
-            const textoNave = document.getElementById("infoNaveActual");
-            
-            if(idNave && baseDatosNaves[idNave]) {
-                textoNave.innerText = baseDatosNaves[idNave];
-            } else {
-                textoNave.innerText = "Ninguna";
-            }
+        // Como aún no tenemos sistema de login, inventamos un ID fijo para ti
+        const MI_USUARIO_ID = "comandante_principal";
 
-            // Lógica de Sinergias (Igual al paso anterior)
-            const idCap = document.getElementById("oficialCap").value;
-            const idIzq = document.getElementById("oficialIzq").value;
-            const idDer = document.getElementById("oficialDer").value;
+        // 1. FUNCIÓN PARA LEER LOS DATOS DESDE SUPABASE AL ABRIR LA WEB
+        async function cargarDatosDesdeNube() {
+            try {
+                // Le pedimos a Supabase las filas de la tabla 'diques' de nuestro usuario
+                let { data, error } = await supabase
+                    .from('diques')
+                    .select('*')
+                    .eq('usuario_id', MI_USUARIO_ID);
 
-            const boxIzq = document.getElementById("boxIzq");
-            const boxDer = document.getElementById("boxDer");
+                if (error) throw error;
 
-            boxIzq.classList.remove("sinergia-activa");
-            boxDer.classList.remove("sinergia-activa");
-
-            let sinergiaTotal = 0;
-
-            if (idCap && baseDatosOficiales[idCap]) {
-                const grupoCapitan = baseDatosOficiales[idCap].grupo;
-
-                if (idIzq && baseDatosOficiales[idIzq] && baseDatosOficiales[idIzq].grupo === grupoCapitan) {
-                    sinergiaTotal += 10;
-                    boxIzq.classList.add("sinergia-activa");
-                }
-                if (idDer && baseDatosOficiales[idDer] && baseDatosOficiales[idDer].grupo === grupoCapitan) {
-                    sinergiaTotal += 10;
-                    boxDer.classList.add("sinergia-activa");
+                // Si hay datos guardados, los ponemos en los desplegables
+                if (data && data.length > 0) {
+                    data.forEach(dique => {
+                        const selector = document.getElementById(`select_${dique.letra_dique}`);
+                        const info = document.getElementById(`info_${dique.letra_dique}`);
+                        if (selector) {
+                            selector.value = dique.id_nave;
+                            info.innerHTML = dique.id_nave ? "<span style='color:#4caf50;'>✔ Sincronizado en la nube</span>" : "Dique libre";
+                        }
+                    });
+                } else {
+                    // Si la BBDD está vacía, limpiamos los textos de carga
+                    ['A', 'B', 'C', 'D'].forEach(l => document.getElementById(`info_${l}`).innerText = "Dique libre");
                 }
 
-                const datosCap = baseDatosOficiales[idCap];
-                document.getElementById("habCapitan").innerHTML = 
-                    `<strong>${datosCap.nombre}:</strong> ${datosCap.habilidadCapitan} <span style="color:#ffeb3b;">(+${sinergiaTotal}% de bonus)</span>`;
-            } else {
-                document.getElementById("habCapitan").innerText = "Ninguna (Se necesita un Capitán asignado)";
-            }
+                document.getElementById('status').innerHTML = "🟢 Subespacio Estable - Datos sincronizados con Supabase.";
+                document.getElementById('status').style.borderLeftColor = "#4caf50";
 
-            document.getElementById("valSinergia").innerText = `+${sinergiaTotal}%`;
+            } catch (error) {
+                console.error("Error cargando datos:", error);
+                document.getElementById('status').innerHTML = "🔴 Error de comunicación con los sensores de Supabase.";
+                document.getElementById('status').style.borderLeftColor = "#f44336";
+            }
         }
+
+        // 2. FUNCIÓN PARA GUARDAR O ACTUALIZAR UNA NAVE CUANDO SE CAMBIA EL DESPLEGABLE
+        async function guardarEnNube(letra) {
+            const naveSeleccionada = document.getElementById(`select_${letra}`).value;
+            const infoDiv = document.getElementById(`info_${letra}`);
+            
+            infoDiv.innerText = "Guardando...";
+
+            try {
+                // Comando 'upsert': Si el registro existe (mismo usuario y dique), lo actualiza. Si no, lo crea.
+                const { error } = await supabase
+                    .from('diques')
+                    .upsert({ 
+                        usuario_id: MI_USUARIO_ID, 
+                        letra_dique: letra, 
+                        id_nave: naveSeleccionada 
+                    }, { onConflict: 'usuario_id, letra_dique' }); // Evita duplicar filas para el mismo dique
+
+                if (error) throw error;
+
+                infoDiv.innerHTML = naveSeleccionada ? "<span style='color:#4caf50;'>✔ Guardado en la nube</span>" : "Dique libre";
+
+            } catch (error) {
+                console.error("Error guardando datos:", error);
+                infoDiv.innerHTML = "<span style='color:#f44336;'>❌ Error al guardar</span>";
+            }
+        }
+
+        // Ejecutar la carga automática al abrir la web
+        cargarDatosDesdeNube();
     </script>
 </body>
 </html>
