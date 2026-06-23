@@ -74,11 +74,7 @@
             font-weight: bold;
             color: #ffb300;
         }
-        .info-nave {
-            font-size: 13px;
-            color: #b0bec5;
-            min-height: 20px;
-        }
+        .info-nave { font-size: 13px; color: #b0bec5; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -94,7 +90,6 @@
         
         <div class="grid-diques">
             <script>
-                // Generamos de manera automática los 4 diques principales en pantalla
                 const letras = ['A', 'B', 'C', 'D'];
                 letras.forEach(l => {
                     document.write(`
@@ -130,29 +125,24 @@
     </div>
 
     <script>
-        // === CONFIGURACIÓN DE TU BASE DE DATOS ===
+        // Configuración directa con tus datos de Supabase reales
         const SUPABASE_URL = "https://wwqbdjslgdizegztdcjc.supabase.co"; 
-        const SUPABASE_KEY = "sb_publishable_Q4MUzur_4BmyFosBuhiYcQ_PFKVu_xT"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3cWJkanNsZ2RpemVnenRkY2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMDIwNTcsImV4cCI6MjA5Nzc3ODA1N30.c79yLH1azR5LNmdtIaSLNJrD61b9FVP6jcpvUa1NVhc"; 
 
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let usuarioActual = null;
 
-        // 1. SEGURIDAD: Verifica si el usuario realmente está logueado
         async function protegerRuta() {
             const { data: { session } } = await supabase.auth.getSession();
-            
             if (session) {
                 usuarioActual = session.user;
                 document.getElementById('userEmail').innerText = usuarioActual.email;
-                // Si todo está bien, cargamos sus naves de la BBDD
                 cargarDatosDesdeNube();
             } else {
-                // SINO TIENE SESIÓN: Patada e intento de colarse frustrado, volvemos al login
                 window.location.href = "index.html";
             }
         }
 
-        // 2. LEER DIQUES: Descarga solo las naves que pertenezcan a este usuario
         async function cargarDatosDesdeNube() {
             try {
                 let { data, error } = await supabase
@@ -162,7 +152,6 @@
 
                 if (error) throw error;
 
-                // Ponemos las naves en cada dique correspondiente
                 if (data) {
                     data.forEach(dique => {
                         const selector = document.getElementById(`select_${dique.letra_dique}`);
@@ -178,7 +167,6 @@
             }
         }
 
-        // 3. GUARDAR: Guarda de forma segura la nave elegida vinculándola a su ID de usuario
         async function guardarEnNube(letra) {
             const naveSeleccionada = document.getElementById(`select_${letra}`).value;
             const infoDiv = document.getElementById(`info_${letra}`);
@@ -201,13 +189,11 @@
             }
         }
 
-        // 4. CERRAR SESIÓN
         async function cerrarSesion() {
             await supabase.auth.signOut();
             window.location.href = "index.html";
         }
 
-        // Arrancar la comprobación de seguridad nada más abrir la página
         protegerRuta();
     </script>
 </body>

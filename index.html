@@ -14,7 +14,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh; /* Centra todo verticalmente en la pantalla */
+            height: 100vh;
         }
         .auth-box {
             max-width: 380px;
@@ -26,23 +26,9 @@
             box-shadow: 0 0 20px #00e5ff;
             box-sizing: border-box;
         }
-        h1 {
-            color: #fff;
-            text-align: center;
-            margin-top: 0;
-            font-size: 24px;
-        }
-        h2 {
-            color: #ffb300;
-            text-align: center;
-            font-size: 18px;
-            margin-bottom: 25px;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
+        h1 { color: #fff; text-align: center; margin-top: 0; font-size: 24px; }
+        h2 { color: #ffb300; text-align: center; font-size: 18px; margin-bottom: 25px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
         input {
             width: 100%;
             padding: 10px;
@@ -65,9 +51,7 @@
             border-radius: 4px;
             margin-bottom: 15px;
         }
-        .btn:hover {
-            background-color: #fff;
-        }
+        .btn:hover { background-color: #fff; }
         .btn-enlace {
             background-color: transparent;
             color: #ffb300;
@@ -93,19 +77,17 @@
         <input type="password" id="authPassword" placeholder="Mínimo 6 caracteres">
         
         <button id="btnPrincipal" class="btn" onclick="manejarAuth()">Entrar al Hangar</button>
-        
         <button id="btnCambiarModo" class="btn-enlace" onclick="cambiarModoAuth()">¿No tienes cuenta? Regístrate aquí</button>
     </div>
 
     <script>
-        // === CONFIGURACIÓN DE TU BASE DE DATOS ===
+        // Configuración directa con tus datos de Supabase reales
         const SUPABASE_URL = "https://wwqbdjslgdizegztdcjc.supabase.co"; 
-        const SUPABASE_KEY = "sb_publishable_Q4MUzur_4BmyFosBuhiYcQ_PFKVu_xT"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3cWJkanNsZ2RpemVnenRkY2pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyMDIwNTcsImV4cCI6MjA5Nzc3ODA1N30.c79yLH1azR5LNmdtIaSLNJrD61b9FVP6jcpvUa1NVhc"; 
 
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let modoRegistro = false; // False = Login, True = Registro
+        let modoRegistro = false;
 
-        // Alterna visualmente el diseño del formulario entre Login y Registro
         function cambiarModoAuth() {
             modoRegistro = !modoRegistro;
             document.getElementById('authTitulo').innerText = modoRegistro ? "Crear Nueva Cuenta" : "Iniciar Sesión";
@@ -113,45 +95,22 @@
             document.getElementById('btnCambiarModo').innerText = modoRegistro ? "¿Ya tienes cuenta? Inicia Sesión" : "¿No tienes cuenta? Regístrate aquí";
         }
 
-        // Envía los datos a Supabase según el modo seleccionado
         async function manejarAuth() {
             const email = document.getElementById('authEmail').value;
             const password = document.getElementById('authPassword').value;
 
-            if (!email || !password) {
-                return alert("Por favor, rellena todos los campos.");
-            }
+            if (!email || !password) return alert("Por favor, rellena todos los campos.");
 
             try {
                 if (modoRegistro) {
-                    // MODO REGISTRO
                     let { data, error } = await supabase.auth.signUp({ email, password });
                     if (error) throw error;
-                    
-                    alert("¡Registro enviado! Si Supabase te pide confirmar por email, revisa tu correo. Si no, ya puedes iniciar sesión.");
-                    cambiarModoAuth(); // Volvemos al modo login automáticamente
+                    alert("¡Registro enviado! Ya puedes iniciar sesión (si desactivaste la confirmación de email en Supabase).");
+                    cambiarModoAuth();
                 } else {
-                    // MODO LOGIN
                     let { data, error } = await supabase.auth.signInWithPassword({ email, password });
                     if (error) throw error;
-                    
-                    // ¡ÉXITO! Si el login es correcto, enviamos al usuario a la página del hangar
-                    alert("¡Acceso concedido! Conectando con el hangar...");
                     window.location.href = "hangar.html"; 
                 }
             } catch (error) {
                 alert("Error de la Flota: " + error.message);
-            }
-        }
-
-        // Si el usuario ya estaba logueado de antes, lo mandamos directo al hangar
-        async function verificarSesionPrevia() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                window.location.href = "hangar.html";
-            }
-        }
-        verificarSesionPrevia();
-    </script>
-</body>
-</html>
